@@ -10,9 +10,12 @@ namespace RatesApi
 {
     class Program
     {
+
         private const string _pathToEnvironment = "ASPNETCORE_ENVIRONMENT";
         static void Main(string[] args)
         {
+            var getter = new RatesGetter();
+            var rates = getter.GetActualRates();
             var builder = new ConfigurationBuilder();
             BuildConfig(builder);
 
@@ -26,7 +29,7 @@ namespace RatesApi
             var host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddTransient<ILogService, LogService>()
+                    //services.AddTransient<ILogService, LogService>()
                 })
                 .UseSerilog()
                 .Build();

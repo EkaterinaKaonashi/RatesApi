@@ -14,8 +14,6 @@ namespace RatesApi
         private const string _pathToEnvironment = "ASPNETCORE_ENVIRONMENT";
         static void Main(string[] args)
         {
-            var getter = new RatesGetter();
-            var rates = getter.GetActualRates();
             var builder = new ConfigurationBuilder();
             BuildConfig(builder);
 

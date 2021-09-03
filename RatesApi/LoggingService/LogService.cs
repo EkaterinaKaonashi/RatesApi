@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,8 @@ namespace RatesApi.LoggingService
                 DateTimeRequest = DateTime.Now,
                 delete = "katya"
             };
-            _log.LogInformation(info.ToString());
+            var result = JsonConvert.SerializeObject(info);
+            _log.LogInformation(result);
         }
     }
 }

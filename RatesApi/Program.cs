@@ -21,22 +21,21 @@ namespace RatesApi
                 .ReadFrom.Configuration(builder.Build())
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
-                
                 .WriteTo.File(
                 builder.GetPathToFile(),
-                rollingInterval:RollingInterval.Minute)
+                rollingInterval:RollingInterval.Day)
                 .CreateLogger();
 
             var host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddTransient<ILogService, LogService>();
+                   
                 })
                 .UseSerilog()
                 .Build();
-            var svc = ActivatorUtilities.CreateInstance<LogService>(host.Services);
-            svc.StartLogging();
-                
+            var svc = ActivatorUtilities.CreateInstance<RatesGetter>(host.Services);
+            var i = svc.GetActualRates();
+
         }
 
         static void BuildConfig(IConfigurationBuilder builder)

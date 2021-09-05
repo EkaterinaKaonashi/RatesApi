@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RatesApi.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,9 +11,6 @@ namespace RatesApi.LoggingService
     {
         public DateTime DateTimeRequest { get; set; }
         public DateTime DateTimeResponse { get; set; }
-        public List<string> CurrencyPairs { get; set; }
-        public string delete { get; set; }
-
-
+        public Rates CurrencyRates { get; set; }
     }
 }

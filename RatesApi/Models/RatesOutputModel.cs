@@ -4,8 +4,8 @@ namespace RatesApi.Models
 {
     public class RatesOutputModel
     {
-        public DateTime DateTime { get; set; }
-        public string Source { get; set; }
-        public Quotes Quotes { get; set; }
+        public DateTime Updated { get; set; }
+        public string BaseCurrency { get; set; }
+        public Rates Rates { get; set; }
     }
 }

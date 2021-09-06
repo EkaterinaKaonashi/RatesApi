@@ -21,20 +21,45 @@ namespace RatesApi
                 .ReadFrom.Configuration(builder.Build())
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
-                .WriteTo.File(
-                builder.GetPathToFile(),
-                rollingInterval:RollingInterval.Day)
+                .WriteTo.File
+                (
+                builder.GetPathToInformationFile(),
+                rollingInterval:RollingInterval.Day,
+                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information
+                )
+                .WriteTo.File
+                (
+                builder.GetPathToErrorFile(),
+                rollingInterval: RollingInterval.Day,
+                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Error
+                )
                 .CreateLogger();
+            try
+            {
+                Log.Information("Application started");
+                var host = CreateHostBuilder(args).Build();
+                var svc = ActivatorUtilities.CreateInstance<RatesGetter>(host.Services);
+                var i = svc.GetActualRates();
+            }
+            catch (Exception ex)
+            {
 
-            var host = Host.CreateDefaultBuilder()
-                .ConfigureServices((context, services) =>
-                {
+                Log.Fatal(ex, "Exception in application");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+
+            //var host = Host.CreateDefaultBuilder()
+            //    .ConfigureServices((context, services) =>
+            //    {
                    
-                })
-                .UseSerilog()
-                .Build();
-            var svc = ActivatorUtilities.CreateInstance<RatesGetter>(host.Services);
-            var i = svc.GetActualRates();
+            //    })
+                //.UseSerilog()
+                //.Build();
+            //var svc = ActivatorUtilities.CreateInstance<RatesGetter>(host.Services);
+            //var i = svc.GetActualRates();
 
         }
 
@@ -45,6 +70,16 @@ namespace RatesApi
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{currentEnvironment ?? "Production"}.json", optional: true) // вынести
                 .AddEnvironmentVariables();
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                .UseSerilog()
+                .ConfigureServices((context, services) =>
+                {
+
+                });
         }
     }
 }

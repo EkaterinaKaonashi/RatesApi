@@ -3,15 +3,22 @@ using System.IO;
 
 namespace RatesApi.Extensions
 {
-    public static class LogExtensions
+    public static class ConfigurationExtensions
     {
         public const string catalogName = "Logs";
-        private const string _fileNameAndFormantForLog = "Log-.txt";
+        private const string _fileNameAndFormantForLogInformation = "Log-.txt";
+        private const string _fileNameAndFormantForLogError = "errorLog-.txt";
 
-       public static string GetPathToFile(this IConfigurationBuilder config)
+       public static string GetPathToInformationFile(this IConfigurationBuilder config)
         {
             var pathToFolder = CheckFolderIfAbsentThenCreate();
-            var path = Path.Combine(pathToFolder, _fileNameAndFormantForLog);
+            var path = Path.Combine(pathToFolder, _fileNameAndFormantForLogInformation);
+            return path;
+        }
+        public static string GetPathToErrorFile(this IConfigurationBuilder config)
+        {
+            var pathToFolder = CheckFolderIfAbsentThenCreate();
+            var path = Path.Combine(pathToFolder, _fileNameAndFormantForLogError);
             return path;
         }
         private static string GetPathToFolder()

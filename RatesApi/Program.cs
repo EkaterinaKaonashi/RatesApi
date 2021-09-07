@@ -1,47 +1,51 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using RatesApi.LoggingService;
+using RatesApi.Extensions;
+using RatesApi.RatesGetter;
+using RatesApi.Settings;
 using Serilog;
-using System;
 using System.IO;
 
 namespace RatesApi
 {
-    class Program
+    public class Program
     {
-
-        private const string _pathToEnvironment = "ASPNETCORE_ENVIRONMENT";
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            var getter = new RatesGetter();
-            var rates = getter.GetActualRates();
-            var builder = new ConfigurationBuilder();
-            BuildConfig(builder);
+            var configuration = CreateConfiguratuion();
+            configuration.SetEnvironmentVariableForConfiguration();
+            ConfigureLogger(configuration);
+            CreateHostBuilder(args, configuration).Build().Run();
+        }
+        public static IConfiguration CreateConfiguratuion() =>
+            new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
+                                      .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                                      .AddEnvironmentVariables()
+                                      .Build();
 
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(builder.Build())
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                //.WriteTo.File("path ")
-                .CreateLogger();
-
-            var host = Host.CreateDefaultBuilder()
+        public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration configuration) =>
+            Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
-                    //services.AddTransient<ILogService, LogService>()
+                    services.AddAutoMapper(typeof(Program));
+                    services.AddOptions<RatesGetterSettings>()
+                    .Bind(configuration.GetSection(nameof(RatesGetterSettings)));
+                    services.AddTransient<IRatesGetter, CurrencyApiRatesGetter>();
+                    services.AddHostedService<Worker>();
                 })
-                .UseSerilog()
-                .Build();
-        }
+                .UseSerilog();
 
-        static void BuildConfig(IConfigurationBuilder builder)
+        public static void ConfigureLogger(IConfiguration configuration)
         {
-            var currentEnvironment = Environment.GetEnvironmentVariable(_pathToEnvironment);
-            builder.SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{currentEnvironment ?? "Production"}.json", optional: true) // вынести
-                .AddEnvironmentVariables();
+            Log.Logger = new LoggerConfiguration()
+                    .ReadFrom.Configuration(configuration)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.File(
+                    configuration.GetPathToFile(),
+                    rollingInterval: RollingInterval.Day)
+                    .CreateLogger();
         }
     }
 }

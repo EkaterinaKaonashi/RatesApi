@@ -11,6 +11,7 @@ namespace RatesApi.LoggingService
     {
         public DateTime DateTimeRequest { get; set; }
         public DateTime DateTimeResponse { get; set; }
+        public string BaseCurrency { get; set; }
         public Rates CurrencyRates { get; set; }
     }
 }

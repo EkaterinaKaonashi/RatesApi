@@ -10,8 +10,8 @@ namespace RatesApi
 {
     public class RatesGetter
     {
-        //private const string _baseUrl = "https://currencyapi.net/api/v1/";
-        private const string _baseUrl = "https://currencyapi.net/api/1/";
+        private const string _baseUrl = "https://currencyapi.net/api/v1/";
+        //private const string _baseUrl = "https://currencyapi.net/api/1/";
         private const string _accessKey = "XVkKpQhfUmb8wWLuGwpa2IRCdky6VqIWfrwe"; // вынести
         private const string _outputFormat = "JSON";
         private string _endPoint;
@@ -33,6 +33,7 @@ namespace RatesApi
             var request = new RestRequest(_endPoint, Method.GET);
             var responce = _restClient.Execute<RatesInputModel>(request);
             info.DateTimeResponse = DateTime.Now;
+            info.BaseCurrency = responce.Data.Base;
             info.CurrencyRates = responce.Data.Rates;
             if (responce.StatusCode == HttpStatusCode.OK)
             {

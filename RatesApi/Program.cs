@@ -51,16 +51,6 @@ namespace RatesApi
                 Log.CloseAndFlush();
             }
 
-            //var host = Host.CreateDefaultBuilder()
-            //    .ConfigureServices((context, services) =>
-            //    {
-                   
-            //    })
-                //.UseSerilog()
-                //.Build();
-            //var svc = ActivatorUtilities.CreateInstance<RatesGetter>(host.Services);
-            //var i = svc.GetActualRates();
-
         }
 
         static void BuildConfig(IConfigurationBuilder builder)

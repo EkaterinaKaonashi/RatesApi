@@ -22,7 +22,6 @@ namespace RatesApi.Configuration
                         { nameof(src.Rates.EUR), src.Rates.EUR },
                         { nameof(src.Rates.JPY), src.Rates.JPY }
                     }));
-            CreateMap<CurrencyApiRates, Rates>();
             CreateMap<RatesOutputModel, RatesLogModel>();
         }
     }

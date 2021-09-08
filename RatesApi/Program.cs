@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RatesApi.Extensions;
-using RatesApi.RatesGetter;
 using RatesApi.Settings;
 using Serilog;
 using System.IO;
@@ -27,11 +26,11 @@ namespace RatesApi
         public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration configuration) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
-                {
+                {                    
                     services.AddAutoMapper(typeof(Program));
                     services.AddOptions<RatesGetterSettings>()
                     .Bind(configuration.GetSection(nameof(RatesGetterSettings)));
-                    services.AddTransient<IRatesGetter, CurrencyApiRatesGetter>();
+                    services.AddCustomServices();
                     services.AddHostedService<Worker>();
                 })
                 .UseSerilog();

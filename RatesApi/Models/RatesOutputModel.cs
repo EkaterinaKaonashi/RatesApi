@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace RatesApi.Models
 {
@@ -6,6 +6,6 @@ namespace RatesApi.Models
     {
         public string Updated { get; set; }
         public string BaseCurrency { get; set; }
-        public Rates Rates { get; set; }
+        public Dictionary<string, decimal> Rates { get; set; }
     }
 }

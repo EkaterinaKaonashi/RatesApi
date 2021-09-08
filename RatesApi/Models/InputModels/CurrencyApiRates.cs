@@ -2,8 +2,8 @@
 {
     public class CurrencyApiRates
     {
-        public double RUB { get; set; }
-        public double EUR { get; set; }
-        public double JPY { get; set; }
+        public decimal RUB { get; set; }
+        public decimal EUR { get; set; }
+        public decimal JPY { get; set; }
     }
 }

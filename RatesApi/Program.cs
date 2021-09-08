@@ -14,7 +14,7 @@ namespace RatesApi
         {
             var configuration = CreateConfiguratuion();
             configuration.SetEnvironmentVariableForConfiguration();
-            ConfigureLogger(configuration);
+            configuration.ConfigureLogger();
             CreateHostBuilder(args, configuration).Build().Run();
         }
         public static IConfiguration CreateConfiguratuion() =>
@@ -34,17 +34,5 @@ namespace RatesApi
                     services.AddHostedService<Worker>();
                 })
                 .UseSerilog();
-
-        public static void ConfigureLogger(IConfiguration configuration)
-        {
-            Log.Logger = new LoggerConfiguration()
-                    .ReadFrom.Configuration(configuration)
-                    .Enrich.FromLogContext()
-                    .WriteTo.Console()
-                    .WriteTo.File(
-                    configuration.GetPathToFile(),
-                    rollingInterval: RollingInterval.Day)
-                    .CreateLogger();
-        }
     }
 }

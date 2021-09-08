@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Serilog;
 using System;
 using System.IO;
 
@@ -8,6 +9,17 @@ namespace RatesApi.Extensions
     {
         public const string catalogName = "Logs";
         private const string _fileNameAndFormantForLog = "Log-.txt";
+        public static void ConfigureLogger(this IConfiguration configuration)
+        {
+            Log.Logger = new LoggerConfiguration()
+                    .ReadFrom.Configuration(configuration)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.File(
+                    configuration.GetPathToFile(),
+                    rollingInterval: RollingInterval.Day)
+                    .CreateLogger();
+        }
         public static void SetEnvironmentVariableForConfiguration(this IConfiguration configuration)
         {
             foreach (var item in configuration.AsEnumerable())

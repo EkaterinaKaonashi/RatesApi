@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,7 +17,14 @@ namespace RatesApi
             var configuration = CreateConfiguratuion();
             configuration.SetEnvironmentVariableForConfiguration();
             ConfigureLogger(configuration);
-            CreateHostBuilder(args, configuration).Build().Run();
+            try
+            {
+                CreateHostBuilder(args, configuration).Build().Run();
+            }
+            finally
+            {
+
+            }
         }
         public static IConfiguration CreateConfiguratuion() =>
             new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
@@ -28,10 +36,15 @@ namespace RatesApi
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
+                    //services.AddMassTransit(x =>
+                    //{
+                    //    x.UsingRabbitMq();
+                    //});
+                    //services.AddMassTransitHostedService();
                     services.AddAutoMapper(typeof(Program));
                     services.AddOptions<RatesGetterSettings>()
                     .Bind(configuration.GetSection(nameof(RatesGetterSettings)));
-                    services.AddTransient<IRatesGetter, CurrencyApiRatesGetter>();
+                    services.AddCustomServices();
                     services.AddHostedService<Worker>();
                 })
                 .UseSerilog();

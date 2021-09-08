@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace RatesApi.Models
 {
@@ -7,6 +7,6 @@ namespace RatesApi.Models
         public string DateTimeRequest { get; set; }
         public string DateTimeResponse { get; set; }
         public string Updated { get; set; }
-        public Rates Rates { get; set; }
+        public Dictionary<string, decimal> Rates { get; set; }
     }
 }

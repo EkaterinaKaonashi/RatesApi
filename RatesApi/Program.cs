@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RatesApi.Extensions;
-using RatesApi.Settings;
 using Serilog;
 using System.IO;
 
@@ -28,9 +27,7 @@ namespace RatesApi
                 .ConfigureServices((context, services) =>
                 {                    
                     services.AddAutoMapper(typeof(Program));
-                    services.AddOptions<RatesGetterSettings>()
-                    .Bind(configuration.GetSection(nameof(RatesGetterSettings)));
-                    services.AddCustomServices();
+                    services.AddCustomServices(configuration);
                     services.AddHostedService<Worker>();
                 })
                 .UseSerilog();

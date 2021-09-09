@@ -14,7 +14,8 @@ namespace RatesApi
             var configuration = CreateConfiguratuion();
             configuration.SetEnvironmentVariableForConfiguration();
             configuration.ConfigureLogger();
-            CreateHostBuilder(args, configuration).Build().Run();
+            var host = CreateHostBuilder(args, configuration).Build();
+            ActivatorUtilities.CreateInstance<RatesService>(host.Services).Run();
         }
         public static IConfiguration CreateConfiguratuion() =>
             new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
@@ -25,10 +26,9 @@ namespace RatesApi
         public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration configuration) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, services) =>
-                {                    
+                {
                     services.AddAutoMapper(typeof(Program));
                     services.AddCustomServices(configuration);
-                    services.AddHostedService<Worker>();
                 })
                 .UseSerilog();
     }

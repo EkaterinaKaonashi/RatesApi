@@ -1,45 +1,47 @@
 ﻿using AutoMapper;
+using Exchange;
 using MassTransit;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RatesApi.Models;
-using RatesApi.RatesGetter;
+using RatesApi.RatesGetters;
+using RatesApi.RatesGetters.ResponceParsers;
 using System;
+using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace RatesApi
 {
-    public class Worker : BackgroundService
+    public class RatesService : IRatesService
     {
         private const string _dateFormat = "dd.MM.yyyy HH:mm:ss";
         private const int _millisecondsDelay = 3600000;
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<RatesService> _logger;
         private readonly IRatesGetter _ratesGetter;
         private readonly IMapper _mapper;
+        private readonly List<IResponceParser> _parsers;
 
-        public Worker(ILogger<Worker> logger, IMapper mapper, IRatesGetter ratesGetter)
+        public RatesService(ILogger<RatesService> logger, IMapper mapper, IRatesGetter ratesGetter)
         {
             _logger = logger;
             _ratesGetter = ratesGetter;
             _mapper = mapper;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public void Run()
         {
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation("RatesService running at: {time}", DateTimeOffset.Now);
 
             var busControl = Bus.Factory.CreateUsingRabbitMq();
-            await busControl.StartAsync(stoppingToken);
+            busControl.StartAsync();
 
             try
             {
-                while (!stoppingToken.IsCancellationRequested)
+                while (true)
                 {
                     var requestTime = DateTime.Now;
 
-                    var ratesOutput = _mapper.Map<RatesOutputModel>(_ratesGetter.GetRates());
+                    var ratesOutput = _mapper.Map<RatesExchangeModel>(_ratesGetter.GetRates());
 
                     var logModel = _mapper.Map<RatesLogModel>(ratesOutput);
                     logModel.DateTimeRequest = requestTime.ToString(_dateFormat);
@@ -47,9 +49,9 @@ namespace RatesApi
                     var logMessage = JsonConvert.SerializeObject(logModel);
                     _logger.LogInformation(logMessage);
 
-                    await busControl.Publish(ratesOutput);
+                    busControl.Publish(ratesOutput);
 
-                    await Task.Delay(_millisecondsDelay, stoppingToken);
+                    Thread.Sleep(_millisecondsDelay);
                 }
             }
             catch (Exception exception)
@@ -58,7 +60,7 @@ namespace RatesApi
             }
             finally
             {
-                await busControl.StopAsync();
+                busControl.StopAsync();
             }
         }
     }

@@ -1,34 +1,37 @@
 ﻿using AutoMapper;
-using Exchange;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RatesApi.Models;
 using RatesApi.RatesGetters;
 using RatesApi.RatesGetters.ResponceParsers;
+using RatesApi.Settings;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
-namespace RatesApi
+namespace RatesApi.Services
 {
-    public class RatesService : IRatesService
+    public class SecondaryRatesService : ISecondaryRatesService
     {
         private const string _dateFormat = "dd.MM.yyyy HH:mm:ss";
         private const int _millisecondsDelay = 3600000;
-        private readonly ILogger<RatesService> _logger;
+        private readonly ILogger<SecondaryRatesService> _logger;
         private readonly IRatesGetter _ratesGetter;
         private readonly IMapper _mapper;
-        private readonly List<IResponceParser> _parsers;
 
-        public RatesService(ILogger<RatesService> logger, IMapper mapper, IRatesGetter ratesGetter)
+        public SecondaryRatesService(
+            ILogger<SecondaryRatesService> logger,
+            IMapper mapper, IRatesGetter ratesGetter,
+            IOptions<SecondaryRatesGetterSettings> settings)
         {
             _logger = logger;
             _ratesGetter = ratesGetter;
+            _ratesGetter.ConfigureGetter(new CurrencyApiResponceParser(mapper), settings.Value);
             _mapper = mapper;
         }
 
-        public void Run()
+        public void GetRates()
         {
             _logger.LogInformation("RatesService running at: {time}", DateTimeOffset.Now);
 
@@ -41,7 +44,7 @@ namespace RatesApi
                 {
                     var requestTime = DateTime.Now;
 
-                    var ratesOutput = _mapper.Map<RatesExchangeModel>(_ratesGetter.GetRates());
+                    var ratesOutput = _ratesGetter.GetRates();
 
                     var logModel = _mapper.Map<RatesLogModel>(ratesOutput);
                     logModel.DateTimeRequest = requestTime.ToString(_dateFormat);

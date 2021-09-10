@@ -15,7 +15,7 @@ namespace RatesApi
             configuration.SetEnvironmentVariableForConfiguration();
             configuration.ConfigureLogger();
             var host = CreateHostBuilder(args, configuration).Build();
-            ActivatorUtilities.CreateInstance<RatesService>(host.Services).Run();
+            ActivatorUtilities.CreateInstance<RatesApiCore>(host.Services).Run();
         }
         public static IConfiguration CreateConfiguratuion() =>
             new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
@@ -28,7 +28,8 @@ namespace RatesApi
                 .ConfigureServices((context, services) =>
                 {
                     services.AddAutoMapper(typeof(Program));
-                    services.AddCustomServices(configuration);
+                    services.AddCustomServices();
+                    services.AddOptions(configuration);
                 })
                 .UseSerilog();
     }

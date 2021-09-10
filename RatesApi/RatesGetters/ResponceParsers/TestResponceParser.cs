@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace RatesApi.RatesGetters.ResponceParsers
 {
-    public class TestResponceParser : IResponceParser
+    public class TestResponceParser //: IResponceParser
     {
         private readonly IMapper _mapper;
         private readonly string _baseCurrency;

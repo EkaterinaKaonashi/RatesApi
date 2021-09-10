@@ -7,6 +7,6 @@ namespace RatesApi.RatesGetters
     public interface IRatesGetter
     {
         RatesExchangeModel GetRates();
-        void ConfigureGetter(IResponceParser parser, IRatesGetterSettings settings);
+        void ConfigureGetter(IResponseParser parser, IRatesGetterSettings settings);
     }
 }

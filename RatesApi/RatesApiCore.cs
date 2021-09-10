@@ -3,6 +3,8 @@ using System;
 using Microsoft.Extensions.Logging;
 using MassTransit;
 using System.Threading;
+using RatesApi.Models;
+using Newtonsoft.Json;
 using RatesApi.Constants;
 using MailAdmin;
 using Microsoft.Extensions.Options;
@@ -47,7 +49,7 @@ namespace RatesApi
                     if (ratesOutput == default)
                     {
                         _logger.LogError(LogMessages._ratesGettingCicleFailed);
-                        busControl.Publish(new MailAdminExchangeModel 
+                        busControl.Publish(new MailAdminExchangeModel
                         {
                             MailTo = _adminEmail,
                             Subject = MailMessages._ratesGettingCicleFailedSubj,

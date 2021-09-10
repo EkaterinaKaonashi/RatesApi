@@ -1,26 +1,29 @@
 ﻿using AutoMapper;
 using Exchange;
 using Newtonsoft.Json;
-using RatesApi.Models;
+using RatesApi.Models.InputModels;
 using RatesApi.Settings;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace RatesApi.RatesGetters.ResponceParsers
 {
-    public class CurrencyApiResponceParser : IResponceParser
+    public class OpenExchangeRatesResponseParser
     {
+        private  string _baseCurrency;
+        private  List<string> _currencies;
         private readonly IMapper _mapper;
-        private string _baseCurrency;
-        private List<string> _currencies;
-        public CurrencyApiResponceParser(string baseCurrency, List<string> currencies, IMapper mapper)
+
+        public OpenExchangeRatesResponseParser(string baseCurrency, List<string> currencies, IMapper mapper)
         {
-            _mapper = mapper;
             _baseCurrency = baseCurrency;
             _currencies = currencies;
+            _mapper = mapper;
         }
-
-        public CurrencyApiResponceParser(IMapper mapper)
+        public OpenExchangeRatesResponseParser(IMapper mapper)
         {
             _mapper = mapper;
         }
@@ -29,10 +32,9 @@ namespace RatesApi.RatesGetters.ResponceParsers
             _baseCurrency = settings.BaseCurrency;
             _currencies = settings.Currencies;
         }
-
         public RatesExchangeModel Parse(string content)
         {
-            var model = JsonConvert.DeserializeObject<CurrencyApiRatesModel>(content);
+            var model = JsonConvert.DeserializeObject<OpenExchangeRatesModel>(content);
             var currensyPairs = new Dictionary<string, decimal>();
             var missingCurrencies = new List<string>();
             foreach (var currency in _currencies)

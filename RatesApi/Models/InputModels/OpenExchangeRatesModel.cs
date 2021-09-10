@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RatesApi.Models.InputModels
 {
-    public class OpenExchangeRatesModel
+    public class OpenExchangeRatesModel : IRatesModel
     {
         public int Timestamp { get; set; }
         public string Base { get; set; }

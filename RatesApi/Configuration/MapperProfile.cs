@@ -18,7 +18,7 @@ namespace RatesApi.Configuration
                 .ForMember(dest => dest.BaseCurrency, opt => opt.MapFrom(src => src.Base));
             CreateMap<OpenExchangeRatesModel, RatesExchangeModel>()
                 .ForMember(dest => dest.Updated, opt => opt.MapFrom(src =>
-                new DateTime(1999, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(src.Timestamp).ToLocalTime().ToString(_dateFormat)))
+                new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(src.Timestamp).ToLocalTime().ToString(_dateFormat)))
                 .ForMember(dest => dest.BaseCurrency, opt => opt.MapFrom(src => src.Base));
         }
     }

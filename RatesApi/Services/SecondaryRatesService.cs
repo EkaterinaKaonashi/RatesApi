@@ -2,7 +2,7 @@
 using Exchange;
 using Microsoft.Extensions.Options;
 using RatesApi.RatesGetters;
-using RatesApi.RatesGetters.ResponceParsers;
+using RatesApi.RatesGetters.Deserializers;
 using RatesApi.Settings;
 
 namespace RatesApi.Services
@@ -16,7 +16,7 @@ namespace RatesApi.Services
             IOptions<SecondaryRatesGetterSettings> settings)
         {
             _ratesGetter = ratesGetter;
-            _ratesGetter.ConfigureGetter(new CurrencyApiResponseParser(mapper), settings.Value);
+            _ratesGetter.ConfigureGetter(new OpenExchangeRatesResponseDeserializer(), settings.Value);
         }
 
         public RatesExchangeModel GetRates()

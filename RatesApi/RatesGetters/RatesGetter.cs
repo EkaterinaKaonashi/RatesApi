@@ -5,9 +5,11 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RatesApi.Constants;
 using RatesApi.Models;
-using RatesApi.RatesGetters.ResponceParsers;
+using RatesApi.RatesGetters.Deserializers;
 using RatesApi.Settings;
 using RestSharp;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 
@@ -18,9 +20,10 @@ namespace RatesApi.RatesGetters
         private readonly RestClient _restClient;
         private readonly CommonSettings _settings;
         private readonly ILogger<RatesGetter> _logger;
+        private readonly IMapper _mapper;
         private string _endPoint;
         private string _accessKey;
-        private IResponseParser _responceParser;
+        private IDeserializer _deserializer;
         private int _retryTimeout;
         private int _retryCount;
 
@@ -32,12 +35,12 @@ namespace RatesApi.RatesGetters
             _logger = logger;
             _retryTimeout = _settings.RetryTimeout;
             _retryCount = _settings.RetryCount;
+            _mapper = mapper;
         }
 
-        public void ConfigureGetter(IResponseParser parser, IRatesGetterSettings settings)
+        public void ConfigureGetter(IDeserializer deserializer, IRatesGetterSettings settings)
         {
-            _responceParser = parser;
-            _responceParser.ConfigureParser(_settings);
+            _deserializer = deserializer;
             _endPoint = settings.Url;
             _accessKey = settings.AccessKey;
         }
@@ -55,7 +58,7 @@ namespace RatesApi.RatesGetters
 
                 if (responce.StatusCode == HttpStatusCode.OK)
                 {
-                    result = _responceParser.Parse(responce.Content);
+                    result = Parse(responce.Content);
                     var conv = JsonConvert.SerializeObject(result);
                     _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
                     return result;
@@ -65,6 +68,24 @@ namespace RatesApi.RatesGetters
             }
             _logger.LogError(string.Format(LogMessages._responceStatusCode, responce.StatusCode));
             return result;
+        }
+        private RatesExchangeModel Parse(string content)
+        {
+            var model = _deserializer.Deserialize(content);
+            var currensyPairs = new Dictionary<string, decimal>();
+            var missingCurrencies = new List<string>();
+            foreach (var currency in _settings.Currencies)
+            {
+                if (!currensyPairs.TryAdd(_settings.BaseCurrency + currency, model.Rates[currency]))
+                    missingCurrencies.Add(currency);
+            }
+            model.Rates = currensyPairs;
+            if (missingCurrencies.Count != 0) throw new Exception($"The next currencies was missed: {missingCurrencies}");
+            if (model.Base != _settings.BaseCurrency)
+            {
+                throw new Exception("Getted rates with wrong base currecy");
+            }
+            return _mapper.Map<RatesExchangeModel>(model);
         }
     }
 }

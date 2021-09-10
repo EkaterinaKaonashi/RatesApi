@@ -1,5 +1,5 @@
 ﻿using Exchange;
-using RatesApi.RatesGetters.ResponceParsers;
+using RatesApi.RatesGetters.Deserializers;
 using RatesApi.Settings;
 
 namespace RatesApi.RatesGetters
@@ -7,6 +7,6 @@ namespace RatesApi.RatesGetters
     public interface IRatesGetter
     {
         RatesExchangeModel GetRates();
-        void ConfigureGetter(IResponseParser parser, IRatesGetterSettings settings);
+        void ConfigureGetter(IDeserializer deserializer, IRatesGetterSettings settings);
     }
 }

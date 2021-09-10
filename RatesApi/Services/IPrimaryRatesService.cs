@@ -1,7 +1,9 @@
-﻿namespace RatesApi.Services
+﻿using Exchange;
+
+namespace RatesApi.Services
 {
     public interface IPrimaryRatesService
     {
-        void GetRates();
+        RatesExchangeModel GetRates();
     }
 }

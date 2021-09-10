@@ -1,4 +1,4 @@
-﻿namespace RatesApi.Models.Exchange
+﻿namespace MailAdmin
 {
     public class MailAdminExchangeModel
     {

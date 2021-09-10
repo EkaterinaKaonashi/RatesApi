@@ -3,58 +3,73 @@ using System;
 using Microsoft.Extensions.Logging;
 using MassTransit;
 using System.Threading;
+using RatesApi.Constants;
+using MailAdmin;
+using Microsoft.Extensions.Options;
+using RatesApi.Settings;
 
 namespace RatesApi
 {
     public class RatesApiCore
     {
-        private const string _dateFormat = "dd.MM.yyyy HH:mm:ss";
         private const int _millisecondsDelay = 3600000;
         private readonly IPrimaryRatesService _primaryRatesService;
         private readonly ISecondaryRatesService _secondaryRatesService;
         private readonly ILogger<SecondaryRatesService> _logger;
+        private readonly string _adminEmail;
 
         public RatesApiCore(
             IPrimaryRatesService primaryRatesService,
             ISecondaryRatesService secondaryRatesService,
-            ILogger<SecondaryRatesService> logger)
+            ILogger<SecondaryRatesService> logger,
+            IOptions<CommonSettings> settings)
         {
             _primaryRatesService = primaryRatesService;
             _secondaryRatesService = secondaryRatesService;
             _logger = logger;
+            _adminEmail = settings.Value.AdminEmail;
         }
         public void Run()
         {
-            _logger.LogInformation("Rates service running at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation(LogMessages._ratesServiceRunned, DateTimeOffset.Now);
 
             var busControl = Bus.Factory.CreateUsingRabbitMq();
             busControl.StartAsync();
-
-            while (true)
+            try
             {
-                try
+                while (true)
                 {
-
-                    var requestTime = DateTime.Now;
-
                     var ratesOutput = _primaryRatesService.GetRates();
-
-                    var logModel = _mapper.Map<RatesLogModel>(ratesOutput);
-                    logModel.DateTimeRequest = requestTime.ToString(_dateFormat);
-                    logModel.DateTimeResponse = DateTime.Now.ToString(_dateFormat);
-                    var logMessage = JsonConvert.SerializeObject(logModel);
-                    _logger.LogInformation(logMessage);
-
-                    busControl.Publish(ratesOutput);
-
+                    if (ratesOutput == default)
+                    {
+                        ratesOutput = _secondaryRatesService.GetRates();
+                    }
+                    if (ratesOutput == default)
+                    {
+                        _logger.LogError(LogMessages._ratesGettingCicleFailed);
+                        busControl.Publish(new MailAdminExchangeModel 
+                        {
+                            MailTo = _adminEmail,
+                            Subject = MailMessages._ratesGettingCicleFailedSubj,
+                            Body = MailMessages._ratesGettingCicleFailed
+                        });
+                    }
+                    else
+                    {
+                        busControl.Publish(ratesOutput);
+                        _logger.LogInformation(LogMessages._ratesWasPublished);
+                    }
                     Thread.Sleep(_millisecondsDelay);
                 }
-                catch (Exception exception)
-                {
-                    _logger.LogError(exception.Message);
-                }
             }
-            busControl.StopAsync();
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex.Message);
+            }
+            finally
+            {
+                busControl.StopAsync();
+            }
         }
     }
 }

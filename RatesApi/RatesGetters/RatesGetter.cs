@@ -2,6 +2,7 @@
 using Exchange;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using RatesApi.Models;
 using RatesApi.RatesGetters.ResponceParsers;
 using RatesApi.Settings;
@@ -19,6 +20,9 @@ namespace RatesApi.RatesGetters
         private readonly ILogger<RatesGetter> _logger;
         private string _endPoint;
         private IResponseParser _responceParser;
+        private const int retryTimeout = 3600;
+        private const int retryCount = 3;
+
 
         public RatesGetter(IOptions<CommonSettings> settings, IMapper mapper, ILogger<RatesGetter> logger)
         {
@@ -36,31 +40,26 @@ namespace RatesApi.RatesGetters
 
         public RatesExchangeModel GetRates()
         {
-            var result = new RatesExchangeModel();
-            var request = new RestRequest(_endPoint, Method.GET);            
+            RatesExchangeModel result = default;
+            var request = new RestRequest(_endPoint, Method.GET);
+            _logger.LogInformation($"endpoint for request: {_endPoint}");
             var responce = _restClient.Execute<CurrencyApiRatesModel>(request);
-            if (responce.StatusCode == HttpStatusCode.OK)
-            {         
-                return _responceParser.Parse(responce.Content);
-            }
-            else
+
+            for (int i = 0; i < retryCount; i++)
             {
-                for (int i = 0; i < 3; i++)
+                var repeatedResponse = _restClient.Execute<CurrencyApiRatesModel>(request);
+
+                if (repeatedResponse.StatusCode == HttpStatusCode.OK)
                 {
-                    Thread.Sleep(3600);
-
-                    var repeatedResponse = _restClient.Execute<CurrencyApiRatesModel>(request);
-
-                    if (repeatedResponse.StatusCode == HttpStatusCode.OK)
-                    {
-                        result = _responceParser.Parse(responce.Content);
-                        break;
-                    }
-
-                _logger.LogError($"Responce status code: {responce.StatusCode}");
-
+                    result = _responceParser.Parse(responce.Content);
+                    var conv = JsonConvert.SerializeObject(result);
+                    _logger.LogInformation("Rates were gotten " + conv);
+                    return result;
                 }
+
+                Thread.Sleep(retryTimeout);
             }
+            _logger.LogError($"Responce status code: {responce.StatusCode}");
             return result;
         }
     }

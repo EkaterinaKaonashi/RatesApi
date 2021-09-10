@@ -34,10 +34,14 @@ namespace RatesApi
         public void Run()
         {
             _logger.LogInformation(LogMessages._ratesServiceRunned, DateTimeOffset.Now);
+
+            var busControl = Bus.Factory.CreateUsingRabbitMq();
+            busControl.StartAsync();
             try
             {
                 while (true)
                 {
+                    var ratesOutput = _primaryRatesService.GetRates();
                     if (ratesOutput == default)
                     {
                         ratesOutput = _secondaryRatesService.GetRates();
@@ -45,7 +49,7 @@ namespace RatesApi
                     if (ratesOutput == default)
                     {
                         _logger.LogError(LogMessages._ratesGettingCicleFailed);
-                        busControl.Publish(new MailAdminExchangeModel 
+                        busControl.Publish(new MailAdminExchangeModel
                         {
                             MailTo = _adminEmail,
                             Subject = MailMessages._ratesGettingCicleFailedSubj,
@@ -57,10 +61,13 @@ namespace RatesApi
                         busControl.Publish(ratesOutput);
                         _logger.LogInformation(LogMessages._ratesWasPublished);
                     }
+                    Thread.Sleep(_millisecondsDelay);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex.Message);
+            }
             finally
             {
                 busControl.StopAsync();

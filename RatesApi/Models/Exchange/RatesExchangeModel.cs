@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace RatesApi.Models
+namespace Exchange
 {
-    public class RatesOutputModel
+    public class RatesExchangeModel
     {
         public string Updated { get; set; }
         public string BaseCurrency { get; set; }

@@ -20,7 +20,7 @@ namespace RatesApi.Services
         {
             _logger = logger;
             _ratesGetter = ratesGetter;
-            _ratesGetter.ConfigureGetter(new CurrencyApiResponceParser(mapper), settings.Value);
+            _ratesGetter.ConfigureGetter(new CurrencyApiResponseParser(mapper), settings.Value);
         }
 
         public RatesExchangeModel GetRates()

@@ -7,6 +7,7 @@ namespace RatesApi.Settings
         public string AdminEmail { get; set; }
         public int RetryTimeout { get; set; }
         public int RetryCount { get; set; }
+        public int MillisecondsDelay { get; set; }
         public string BaseCurrency { get; set; }
         public List<string> Currencies { get; set; }
     }

@@ -3,8 +3,6 @@ using System;
 using Microsoft.Extensions.Logging;
 using MassTransit;
 using System.Threading;
-using RatesApi.Models;
-using Newtonsoft.Json;
 using RatesApi.Constants;
 using MailAdmin;
 using Microsoft.Extensions.Options;
@@ -14,7 +12,7 @@ namespace RatesApi
 {
     public class RatesApiCore
     {
-        private const int _millisecondsDelay = 3600000;
+        private readonly int _millisecondsDelay;
         private readonly IPrimaryRatesService _primaryRatesService;
         private readonly ISecondaryRatesService _secondaryRatesService;
         private readonly ILogger<SecondaryRatesService> _logger;
@@ -30,6 +28,7 @@ namespace RatesApi
             _secondaryRatesService = secondaryRatesService;
             _logger = logger;
             _adminEmail = settings.Value.AdminEmail;
+            _millisecondsDelay = settings.Value.MillisecondsDelay;
         }
         public void Run()
         {

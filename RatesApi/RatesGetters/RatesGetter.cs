@@ -43,13 +43,12 @@ namespace RatesApi.RatesGetters
         public RatesExchangeModel GetRates<T>()
         {
             RatesExchangeModel result = default;
-            var request = new RestRequest(string.Format(_endPoint, _accessKey), Method.GET);
-            IRestResponse<T> responce = default;
+            var request = new RestRequest(string.Format(_endPoint, _accessKey, _settings.BaseCurrency), Method.GET);
 
             for (int i = 0; i < _retryCount; i++)
             {
                 _logger.LogInformation(string.Format(LogMessages._requestToEndpoint, _endPoint));
-                responce = _restClient.Execute<T>(request);
+                var responce = _restClient.Execute<T>(request);
                 if (responce.StatusCode == HttpStatusCode.OK)
                 {
                     result = Parse(responce.Data);
@@ -57,10 +56,9 @@ namespace RatesApi.RatesGetters
                     _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
                     return result;
                 }
-                _logger.LogInformation(string.Format(LogMessages._tryToRequestFailed, i + 1));
+                _logger.LogError(string.Format(LogMessages._tryToRequestFailed, i + 1) + ": " + responce.Content);
                 if (i != _retryCount - 1) Thread.Sleep(_retryTimeout);
             }
-            _logger.LogError(string.Format(LogMessages._responceStatusCode, responce.StatusCode));
             return result;
         }
         private RatesExchangeModel Parse<T>(T responseModel)
@@ -72,7 +70,7 @@ namespace RatesApi.RatesGetters
             {
                 if (result.Rates.TryGetValue(currency, out decimal rate))
                 {
-                    currensyPairs.TryAdd(_settings.BaseCurrency + currency, rate);
+                    currensyPairs.TryAdd(result.BaseCurrency + currency, rate);
                 }
                 else
                 {

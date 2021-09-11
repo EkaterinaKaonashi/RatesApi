@@ -1,8 +1,7 @@
-﻿using AutoMapper;
-using Exchange;
+﻿using Exchange;
 using Microsoft.Extensions.Options;
+using RatesApi.Models;
 using RatesApi.RatesGetters;
-using RatesApi.RatesGetters.Deserializers;
 using RatesApi.Settings;
 
 namespace RatesApi.Services
@@ -11,17 +10,13 @@ namespace RatesApi.Services
     {
         private readonly IRatesGetter _ratesGetter;
 
-        public PrimaryRatesService(
-            IMapper mapper, IRatesGetter ratesGetter,
+        public PrimaryRatesService(IRatesGetter ratesGetter,
             IOptions<PrimaryRatesGetterSettings> settings)
         {
             _ratesGetter = ratesGetter;
-            _ratesGetter.ConfigureGetter(new CurrencyApiResponseDeserializer(), settings.Value);
+            _ratesGetter.ConfigureGetter(settings.Value);
         }
 
-        public RatesExchangeModel GetRates()
-        {
-            return _ratesGetter.GetRates();
-        }
+        public RatesExchangeModel GetRates() => _ratesGetter.GetRates<CurrencyApiRatesModel>();
     }
 }

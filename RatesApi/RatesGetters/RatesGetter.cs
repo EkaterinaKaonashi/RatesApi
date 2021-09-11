@@ -4,11 +4,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RatesApi.Constants;
-using RatesApi.Models;
-using RatesApi.RatesGetters.Deserializers;
 using RatesApi.Settings;
 using RestSharp;
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -23,7 +20,6 @@ namespace RatesApi.RatesGetters
         private readonly IMapper _mapper;
         private string _endPoint;
         private string _accessKey;
-        private IDeserializer _deserializer;
         private int _retryTimeout;
         private int _retryCount;
 
@@ -38,54 +34,61 @@ namespace RatesApi.RatesGetters
             _mapper = mapper;
         }
 
-        public void ConfigureGetter(IDeserializer deserializer, IRatesGetterSettings settings)
+        public void ConfigureGetter(IRatesGetterSettings settings)
         {
-            _deserializer = deserializer;
             _endPoint = settings.Url;
             _accessKey = settings.AccessKey;
         }
 
-        public RatesExchangeModel GetRates()
+        public RatesExchangeModel GetRates<T>()
         {
             RatesExchangeModel result = default;
             var request = new RestRequest(string.Format(_endPoint, _accessKey), Method.GET);
-            IRestResponse responce = default;
+            IRestResponse<T> responce = default;
 
             for (int i = 0; i < _retryCount; i++)
             {
                 _logger.LogInformation(string.Format(LogMessages._requestToEndpoint, _endPoint));
-                responce = _restClient.Execute<CurrencyApiRatesModel>(request);
-
+                responce = _restClient.Execute<T>(request);
                 if (responce.StatusCode == HttpStatusCode.OK)
                 {
-                    result = Parse(responce.Content);
+                    result = Parse(responce.Data);
                     var conv = JsonConvert.SerializeObject(result);
                     _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
                     return result;
                 }
-                _logger.LogInformation(string.Format(LogMessages._tryToRequestFailed, i+1));
+                _logger.LogInformation(string.Format(LogMessages._tryToRequestFailed, i + 1));
                 if (i != _retryCount - 1) Thread.Sleep(_retryTimeout);
             }
             _logger.LogError(string.Format(LogMessages._responceStatusCode, responce.StatusCode));
             return result;
         }
-        private RatesExchangeModel Parse(string content)
+        private RatesExchangeModel Parse<T>(T responseModel)
         {
-            var model = _deserializer.Deserialize(content);
+            var result = _mapper.Map<RatesExchangeModel>(responseModel);
             var currensyPairs = new Dictionary<string, decimal>();
             var missingCurrencies = new List<string>();
             foreach (var currency in _settings.Currencies)
             {
-                if (!currensyPairs.TryAdd(_settings.BaseCurrency + currency, model.Rates[currency]))
+                if (result.Rates.TryGetValue(currency, out decimal rate))
+                {
+                    currensyPairs.TryAdd(_settings.BaseCurrency + currency, rate);
+                }
+                else
+                {
                     missingCurrencies.Add(currency);
+                }
             }
-            model.Rates = currensyPairs;
-            if (missingCurrencies.Count != 0) throw new Exception($"The next currencies was missed: {missingCurrencies}");
-            if (model.Base != _settings.BaseCurrency)
+            result.Rates = currensyPairs;
+            if (missingCurrencies.Count != 0)
             {
-                throw new Exception("Getted rates with wrong base currecy");
+                _logger.LogError(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
             }
-            return _mapper.Map<RatesExchangeModel>(model);
+            if (result.BaseCurrency != _settings.BaseCurrency)
+            {
+                _logger.LogError(string.Format(LogMessages._wrongBaseCurrecy));
+            }
+            return result;
         }
     }
 }

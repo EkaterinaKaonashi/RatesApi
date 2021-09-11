@@ -9,5 +9,7 @@
         public const string _ratesWereGotten = "Rates were gotten {0}";
         public const string _tryToRequestFailed = "{0} try to request failed";
         public const string _responceStatusCode = "Responce status code: {0}";
+        public const string _currenciesWereMissed = "The next currencies were missed: {0}";
+        public const string _wrongBaseCurrecy = "Getted rates with wrong base currecy";
     }
 }

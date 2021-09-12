@@ -52,6 +52,7 @@ namespace RatesApi.RatesGetters
                 if (responce.StatusCode == HttpStatusCode.OK)
                 {
                     result = Parse(responce.Data);
+                    if (result == default) return result;
                     var conv = JsonConvert.SerializeObject(result);
                     _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
                     return result;
@@ -64,27 +65,32 @@ namespace RatesApi.RatesGetters
         private RatesExchangeModel Parse<T>(T responseModel)
         {
             var result = _mapper.Map<RatesExchangeModel>(responseModel);
-            var currensyPairs = new Dictionary<string, decimal>();
+            var rates = new Dictionary<string, decimal>();
             var missingCurrencies = new List<string>();
-            foreach (var currency in _settings.Currencies)
-            {
-                if (result.Rates.TryGetValue(currency, out decimal rate))
-                {
-                    currensyPairs.TryAdd(result.BaseCurrency + currency, rate);
-                }
-                else
-                {
-                    missingCurrencies.Add(currency);
-                }
-            }
-            result.Rates = currensyPairs;
-            if (missingCurrencies.Count != 0)
-            {
-                _logger.LogError(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
-            }
+
             if (result.BaseCurrency != _settings.BaseCurrency)
             {
                 _logger.LogError(string.Format(LogMessages._wrongBaseCurrecy));
+                return default;
+            }
+            else
+            {
+                foreach (var currency in _settings.Currencies)
+                {
+                    if (result.Rates.TryGetValue(_settings.BaseCurrency + currency, out decimal rate))
+                    {
+                        rates.TryAdd(_settings.BaseCurrency + currency, rate);
+                    }
+                    else
+                    {
+                        missingCurrencies.Add(currency);
+                    }
+                }
+                if (missingCurrencies.Count != 0)
+                {
+                    _logger.LogError(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
+                }
+                result.Rates = rates;
             }
             return result;
         }

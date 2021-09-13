@@ -45,9 +45,10 @@ namespace RatesApi.RatesGetters
             RatesExchangeModel result = default;
             var request = new RestRequest(string.Format(_endPoint, _accessKey, _settings.BaseCurrency), Method.GET);
 
+            _logger.LogInformation(string.Format(LogMessages._requestToEndpoint,
+                string.Format(_endPoint, nameof(_accessKey), _settings.BaseCurrency)));
             for (int i = 0; i < _retryCount; i++)
             {
-                _logger.LogInformation(string.Format(LogMessages._requestToEndpoint, _endPoint));
                 var responce = _restClient.Execute<T>(request);
                 if (responce.StatusCode == HttpStatusCode.OK)
                 {

@@ -1,6 +1,6 @@
-﻿namespace MailAdmin
+﻿namespace MailExchange
 {
-    public class MailAdminExchangeModel
+    public interface IMailExchangeModel
     {
         public string MailTo { get; set; }
         public string Subject { get; set; }

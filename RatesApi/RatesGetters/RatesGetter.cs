@@ -57,7 +57,8 @@ namespace RatesApi.RatesGetters
                     _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
                     return result;
                 }
-                _logger.LogError(string.Format(LogMessages._tryToRequestFailed, i + 1) + ": " + responce.Content);
+                var error = responce.ErrorMessage == default ? responce.Content : responce.ErrorMessage;
+                _logger.LogError(string.Format(LogMessages._tryToRequestFailed, i + 1, error));
                 if (i != _retryCount - 1) Thread.Sleep(_retryTimeout);
             }
             return result;

@@ -48,7 +48,7 @@ namespace RatesApi
                     if (ratesOutput == default)
                     {
                         _logger.LogError(LogMessages._ratesGettingCicleFailed);
-                        busControl.Publish<MailExchangeModel>(new 
+                        busControl.Publish<IMailExchangeModel>(new 
                         {
                             MailTo = _adminEmail,
                             Subject = MailMessages._ratesGettingCicleFailedSubj,

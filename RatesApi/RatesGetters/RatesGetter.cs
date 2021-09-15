@@ -42,59 +42,66 @@ namespace RatesApi.RatesGetters
 
         public RatesExchangeModel GetRates<T>()
         {
-            RatesExchangeModel result = default;
             var request = new RestRequest(string.Format(_endPoint, _accessKey, _settings.BaseCurrency), Method.GET);
 
             _logger.LogInformation(string.Format(LogMessages._requestToEndpoint,
                 string.Format(_endPoint, nameof(_accessKey), _settings.BaseCurrency)));
             for (int i = 0; i < _retryCount; i++)
             {
+                string errorDescription;
                 var responce = _restClient.Execute<T>(request);
                 if (responce.StatusCode == HttpStatusCode.OK)
                 {
-                    result = Parse(responce.Data);
-                    if (result == default) return result;
-                    var conv = JsonConvert.SerializeObject(result);
-                    _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
-                    return result;
+                    if (TryParse(responce.Data, out RatesExchangeModel result, out string errorMessage))
+                    {
+                        var conv = JsonConvert.SerializeObject(result);
+                        _logger.LogInformation(string.Format(LogMessages._ratesWereGotten, conv));
+                        return result;
+                    }
+                    errorDescription = errorMessage;
                 }
-                var error = responce.ErrorMessage == default ? responce.Content : responce.ErrorMessage;
-                _logger.LogError(string.Format(LogMessages._tryToRequestFailed, i + 1, error));
+                else
+                {
+                    errorDescription = responce.ErrorMessage == default ? responce.Content : responce.ErrorMessage;
+                }
+                _logger.LogError(string.Format(LogMessages._tryToRequestFailed, i + 1, errorDescription));
                 if (i != _retryCount - 1) Thread.Sleep(_retryTimeout);
             }
-            return result;
+            return default;
         }
-        private RatesExchangeModel Parse<T>(T responseModel)
+        private bool TryParse<T>(T responseModel, out RatesExchangeModel result, out string errorMessage)
         {
-            var result = _mapper.Map<RatesExchangeModel>(responseModel);
+            errorMessage = default;
+            result = _mapper.Map<RatesExchangeModel>(responseModel);
             var rates = new Dictionary<string, decimal>();
             var missingCurrencies = new List<string>();
 
             if (result.BaseCurrency != _settings.BaseCurrency)
             {
-                _logger.LogError(string.Format(LogMessages._wrongBaseCurrecy));
-                return default;
+                errorMessage = (string.Format(LogMessages._wrongBaseCurrecy));
+                result = default;
             }
             else
             {
                 foreach (var currency in _settings.Currencies)
                 {
-                    if (result.Rates.TryGetValue(_settings.BaseCurrency + currency, out decimal rate))
-                    {
-                        rates.TryAdd(_settings.BaseCurrency + currency, rate);
-                    }
-                    else
+                    if (!result.Rates.TryGetValue(_settings.BaseCurrency + currency, out decimal rate) || rate == default)
                     {
                         missingCurrencies.Add(currency);
                     }
-                }
-                if (missingCurrencies.Count != 0)
-                {
-                    _logger.LogError(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
+                    else
+                    {
+                        rates.TryAdd(_settings.BaseCurrency + currency, rate);
+                    }
                 }
                 result.Rates = rates;
+                if (missingCurrencies.Count != 0)
+                {
+                    errorMessage = (string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
+                    result = default;
+                }
             }
-            return result;
+            return result != default;
         }
     }
 }

@@ -11,10 +11,10 @@ namespace RatesApi
         private event CheckResultHandler CheckResult;
         public delegate T ServiceHandler();
         public delegate bool CheckResultHandler(T result);
-        public RetryHandler(ServiceHandler serviceHandler, CheckResultHandler failHandler, int retryCount, int millisecondsDelay)
+        public RetryHandler(ServiceHandler serviceHandler, CheckResultHandler checkResultHandler, int retryCount, int millisecondsDelay)
         {
             _servicesHandlers = new List<ServiceHandler> { serviceHandler };
-            CheckResult += failHandler;
+            CheckResult += checkResultHandler;
             _retryCount = retryCount;
             _millisecondsDelay = millisecondsDelay;
         }

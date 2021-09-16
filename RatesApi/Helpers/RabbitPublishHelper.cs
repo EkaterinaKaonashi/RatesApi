@@ -1,27 +1,37 @@
 ﻿using MailExchange;
 using MassTransit;
+using Microsoft.Extensions.Options;
+using RatesApi.Settings;
 
 namespace RatesApi.Helpers
 {
     public class RabbitPublishHelper : IRabbitPublishHelper
     {
         private readonly IBusControl _busControl;
+        private readonly PublisherSettings _settings;
 
-        public RabbitPublishHelper()
+        public RabbitPublishHelper(IOptions<PublisherSettings> settings)
         {
-            _busControl = Bus.Factory.CreateUsingRabbitMq();
+            _settings = settings.Value;
+            _busControl = Bus.Factory.CreateUsingRabbitMq(cfg => cfg.Host(_settings.Address, h =>
+            {
+                h.Username(_settings.Username);
+                h.Password(_settings.Password);
+            }));
             _busControl.StartAsync();
         }
 
         public void Publish<T>(T obj) => _busControl.Publish(obj);
 
-        public void PublishMail(string address, string subj, string body)
+        public void PublishMail(string subj, string body)
         {
             _busControl.Publish<IMailExchangeModel>(new
             {
-                MailTo = address,
                 Subject = subj,
-                Body = body
+                Body = body,
+                DisplayName = _settings.MailDisplayName,
+                MailAddresses = _settings.AdminEmail,
+                IsBodyHtml = false
             });
         }
 

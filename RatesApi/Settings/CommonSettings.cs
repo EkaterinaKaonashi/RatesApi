@@ -4,7 +4,7 @@ namespace RatesApi.Settings
 {
     public class CommonSettings
     {
-        public string AdminEmail { get; set; }
+        
         public int RetryTimeout { get; set; }
         public int RetryCount { get; set; }
         public int MillisecondsDelay { get; set; }

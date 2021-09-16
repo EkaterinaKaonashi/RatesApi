@@ -15,7 +15,6 @@ namespace RatesApi
         private readonly ILogger<RatesApiCore> _logger;
         private readonly IRabbitPublishHelper _publisher;
         private readonly RetryHandler<RatesExchangeModel> _retryHandler;
-        private readonly string _adminEmail;
         private readonly int _millisecondsDelay;
         private Timer _timer;
 
@@ -37,7 +36,6 @@ namespace RatesApi
             _retryHandler.AddReserveService(secondaryRatesService.GetRates);
 
             _millisecondsDelay = settings.Value.MillisecondsDelay;
-            _adminEmail = settings.Value.AdminEmail;
         }
         public void Run()
         {
@@ -67,7 +65,7 @@ namespace RatesApi
             else
             {
                 _logger.LogError(LogMessages._ratesGettingCicleFailed);
-                _publisher.PublishMail(_adminEmail, MailMessages._ratesGettingCicleFailedSubj, MailMessages._ratesGettingCicleFailed);
+                _publisher.PublishMail(MailMessages._ratesGettingCicleFailedSubj, MailMessages._ratesGettingCicleFailed);
             }
         }
         private void SetTimer()

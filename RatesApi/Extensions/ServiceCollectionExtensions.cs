@@ -25,6 +25,8 @@ namespace RatesApi.Extensions
                     .Bind(configuration.GetSection(nameof(SecondaryRatesGetterSettings)));
             services.AddOptions<CommonSettings>()
                     .Bind(configuration.GetSection(nameof(CommonSettings)));
+            services.AddOptions<PublisherSettings>()
+                    .Bind(configuration.GetSection(nameof(PublisherSettings)));
         }
     }
 }

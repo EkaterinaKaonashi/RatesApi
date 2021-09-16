@@ -16,10 +16,10 @@ namespace RatesApi.RatesGetters
         private readonly RestClient _restClient;
         private readonly ILogger<RatesGetter> _logger;
         private readonly IMapper _mapper;
+        private readonly string _baseCurrency;
+        private readonly List<string> _currencies;
         private string _endPoint;
         private string _accessKey;
-        private string _baseCurrency;
-        private List<string> _currencies;
 
 
         public RatesGetter(IOptions<CommonSettings> settings, IMapper mapper, ILogger<RatesGetter> logger)
@@ -62,9 +62,7 @@ namespace RatesApi.RatesGetters
         private bool TryParse<T>(T responseModel, out RatesExchangeModel result)
         {
             result = _mapper.Map<RatesExchangeModel>(responseModel);
-            var rates = new Dictionary<string, decimal>();
-            var missingCurrencies = new List<string>();
-
+            
             if (result.BaseCurrency != _baseCurrency)
             {
                 _logger.LogError(string.Format(LogMessages._wrongBaseCurrecy));
@@ -72,18 +70,7 @@ namespace RatesApi.RatesGetters
             }
             else
             {
-                foreach (var currency in _currencies)
-                {
-                    if (!result.Rates.TryGetValue($"{_baseCurrency}{currency}", out decimal rate) || rate == default)
-                    {
-                        missingCurrencies.Add(currency);
-                    }
-                    else
-                    {
-                        rates.TryAdd($"{_baseCurrency}{currency}", rate);
-                    }
-                }
-                result.Rates = rates;
+                result.Rates = SeparateCurrencies(result.Rates, out List<string> missingCurrencies);
                 if (missingCurrencies.Count != 0)
                 {
                     _logger.LogError(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
@@ -91,6 +78,23 @@ namespace RatesApi.RatesGetters
                 }
             }
             return result != default;
+        }
+        private Dictionary<string, decimal> SeparateCurrencies(Dictionary<string, decimal> inputRates, out List<string> missingCurrencies)
+        {
+            var outputRates = new Dictionary<string, decimal>();
+            missingCurrencies = new List<string>();
+            foreach (var currency in _currencies)
+            {
+                if (!inputRates.TryGetValue($"{_baseCurrency}{currency}", out decimal rate) || rate == default)
+                {
+                    missingCurrencies.Add(currency);
+                }
+                else
+                {
+                    outputRates.TryAdd($"{_baseCurrency}{currency}", rate);
+                }
+            }
+            return outputRates;
         }
     }
 }

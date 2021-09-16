@@ -7,7 +7,7 @@ namespace RatesApi
     {
         private readonly int _retryCount;
         private readonly int _millisecondsDelay;
-        private List<ServiceHandler> _servicesHandlers;
+        private readonly List<ServiceHandler> _servicesHandlers;
         private event CheckResultHandler CheckResult;
         public delegate T ServiceHandler();
         public delegate bool CheckResultHandler(T result);

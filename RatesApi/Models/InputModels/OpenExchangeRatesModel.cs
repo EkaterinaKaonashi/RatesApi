@@ -2,7 +2,7 @@
 
 namespace RatesApi.Models.InputModels
 {
-    public class OpenExchangeRatesModel : IRatesModel
+    public class OpenExchangeRatesModel
     {
         public int Timestamp { get; set; }
         public string Base { get; set; }

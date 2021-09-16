@@ -1,49 +1,48 @@
 ﻿using RatesApi.Services;
 using System;
 using Microsoft.Extensions.Logging;
-using MassTransit;
+using System.Threading;
 using RatesApi.Constants;
 using Microsoft.Extensions.Options;
 using RatesApi.Settings;
-using MailExchange;
-using System.Threading;
+using RatesApi.Helpers;
+using Exchange;
 
 namespace RatesApi
 {
     public class RatesApiCore
     {
-        private readonly int _millisecondsDelay;
-        private readonly IPrimaryRatesService _primaryRatesService;
-        private readonly ISecondaryRatesService _secondaryRatesService;
-        private readonly ILogger<SecondaryRatesService> _logger;
-        private readonly IBusControl _busControl;
+        private readonly ILogger<RatesApiCore> _logger;
+        private readonly IRabbitPublishHelper _publisher;
+        private readonly RetryHandler<RatesExchangeModel> _retryHandler;
         private readonly string _adminEmail;
-        private  Timer timer;
-        delegate void OnTimedEvent();
 
         public RatesApiCore(
             IPrimaryRatesService primaryRatesService,
             ISecondaryRatesService secondaryRatesService,
-            ILogger<SecondaryRatesService> logger,
-            IOptions<CommonSettings> settings)
+            ILogger<RatesApiCore> logger,
+            IOptions<CommonSettings> settings,
+            IRabbitPublishHelper publisher)
         {
-            _primaryRatesService = primaryRatesService;
-            _secondaryRatesService = secondaryRatesService;
             _logger = logger;
-            _adminEmail = settings.Value.AdminEmail;
-            _millisecondsDelay = settings.Value.MillisecondsDelay;
-            _busControl = Bus.Factory.CreateUsingRabbitMq();
-            
+            _publisher = publisher;
+            _retryHandler = new RetryHandler<RatesExchangeModel>(
+                primaryRatesService.GetRates,
+                result => result != default,
+                settings.Value.RetryCount,
+                settings.Value.RetryTimeout);
+            _retryHandler.AddReserveService(secondaryRatesService.GetRates);
         }
         public void Run()
         {
             _logger.LogInformation(LogMessages._ratesServiceRunned, DateTimeOffset.Now);
-
-            _busControl.StartAsync();
+            
             try
             {
-                SetTimer();
-                while (true) { };
+                while (true)
+                {
+                    var d =_retryHandler.Execute();
+                }
             }
             catch (Exception ex)
             {
@@ -51,38 +50,8 @@ namespace RatesApi
             }
             finally
             {
-                _busControl.StopAsync();
-                timer.Dispose();
+                _publisher.Stop();
             }
-        }
-        private void GetRates(object e)
-        {
-            var ratesOutput = _primaryRatesService.GetRates();
-            if (ratesOutput == default)
-            {
-                ratesOutput = _secondaryRatesService.GetRates();
-            }
-            if (ratesOutput == default)
-            {
-                _logger.LogError(LogMessages._ratesGettingCicleFailed);
-                _busControl.Publish<IMailExchangeModel>(new
-                {
-                    MailTo = _adminEmail,
-                    Subject = MailMessages._ratesGettingCicleFailedSubj,
-                    Body = MailMessages._ratesGettingCicleFailed
-                });
-            }
-            else
-            {
-                _busControl.Publish(ratesOutput);
-                _logger.LogInformation(LogMessages._ratesWasPublished);
-            }
-
-        }
-        private void SetTimer()
-        {
-            TimerCallback act = new TimerCallback(GetRates);
-            timer =  new Timer(act, default, 0, _millisecondsDelay);
         }
     }
 }

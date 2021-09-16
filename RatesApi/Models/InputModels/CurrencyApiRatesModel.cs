@@ -2,7 +2,7 @@
 
 namespace RatesApi.Models
 {
-    public class CurrencyApiRatesModel : IRatesModel
+    public class CurrencyApiRatesModel
     {
         public double Updated { get; set; }
         public string Base { get; set; }

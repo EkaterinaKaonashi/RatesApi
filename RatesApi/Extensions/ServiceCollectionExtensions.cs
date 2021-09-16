@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RatesApi.Helpers;
 using RatesApi.RatesGetters;
 using RatesApi.Services;
 using RatesApi.Settings;
@@ -13,6 +14,7 @@ namespace RatesApi.Extensions
             services.AddTransient<IRatesGetter, RatesGetter>();
             services.AddTransient<IPrimaryRatesService, PrimaryRatesService>();
             services.AddTransient<ISecondaryRatesService, SecondaryRatesService>();
+            services.AddTransient<IRabbitPublishHelper, RabbitPublishHelper>();
         }
 
         public static void AddOptions(this IServiceCollection services, IConfiguration configuration)

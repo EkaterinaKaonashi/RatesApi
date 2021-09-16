@@ -6,7 +6,7 @@ using RatesApi.Constants;
 using Microsoft.Extensions.Options;
 using RatesApi.Settings;
 using MailExchange;
-using System.Timers;
+using System.Threading;
 
 namespace RatesApi
 {
@@ -27,7 +27,6 @@ namespace RatesApi
             ILogger<SecondaryRatesService> logger,
             IOptions<CommonSettings> settings)
         {
-            timer = new Timer(30000);
             _primaryRatesService = primaryRatesService;
             _secondaryRatesService = secondaryRatesService;
             _logger = logger;
@@ -40,13 +39,11 @@ namespace RatesApi
         {
             _logger.LogInformation(LogMessages._ratesServiceRunned, DateTimeOffset.Now);
 
-            //var busControl = Bus.Factory.CreateUsingRabbitMq();
             _busControl.StartAsync();
             try
             {
-                GetRates();
-                Console.ReadLine();
-                timer.Dispose();
+                SetTimer();
+                while (true) { };
             }
             catch (Exception ex)
             {
@@ -55,9 +52,10 @@ namespace RatesApi
             finally
             {
                 _busControl.StopAsync();
+                timer.Dispose();
             }
         }
-        private void GetRates(object sender = default, ElapsedEventArgs e = default)
+        private void GetRates(object e)
         {
             var ratesOutput = _primaryRatesService.GetRates();
             if (ratesOutput == default)
@@ -77,19 +75,14 @@ namespace RatesApi
             else
             {
                 _busControl.Publish(ratesOutput);
-                _logger.LogInformation(LogMessages._ratesWasPublished + DateTime.Now.ToString("HH:m:ss:fffffff"));
+                _logger.LogInformation(LogMessages._ratesWasPublished);
             }
-            SetTimer();
-            timer.Start();
 
         }
         private void SetTimer()
         {
-           
-            
-            timer.Elapsed += GetRates;
-            timer.AutoReset = false;
-            timer.Enabled = true;
+            TimerCallback act = new TimerCallback(GetRates);
+            timer =  new Timer(act, default, 0, _millisecondsDelay);
         }
     }
 }

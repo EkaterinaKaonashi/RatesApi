@@ -1,12 +1,11 @@
 ﻿using RatesApi.Services;
 using System;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 using RatesApi.Constants;
 using Microsoft.Extensions.Options;
 using RatesApi.Settings;
 using RatesApi.Helpers;
-using Exchange;
+using System.Threading;
 
 namespace RatesApi
 {
@@ -14,9 +13,8 @@ namespace RatesApi
     {
         private readonly ILogger<RatesApiCore> _logger;
         private readonly IRabbitPublishHelper _publisher;
-        private readonly RetryHandler<RatesExchangeModel> _retryHandler;
+        private readonly RetryHandler _retryHandler;
         private readonly int _millisecondsDelay;
-        private Timer _timer;
 
         public RatesApiCore(
             IPrimaryRatesService primaryRatesService,
@@ -28,12 +26,11 @@ namespace RatesApi
             _logger = logger;
             _publisher = publisher;
 
-            _retryHandler = new RetryHandler<RatesExchangeModel>(
+            _retryHandler = new RetryHandler(
                 primaryRatesService.GetRates,
-                result => result != default,
                 settings.Value.RetryCount,
                 settings.Value.RetryTimeout);
-            _retryHandler.AddReserveService(secondaryRatesService.GetRates);
+            _retryHandler.AddService(secondaryRatesService.GetRates);
 
             _millisecondsDelay = settings.Value.MillisecondsDelay;
         }
@@ -43,7 +40,7 @@ namespace RatesApi
 
             try
             {
-                SetTimer();
+                var timer = new Timer(Execute, default, 0, _millisecondsDelay);
                 while (true) { };
             }
             catch (Exception ex)
@@ -55,7 +52,7 @@ namespace RatesApi
                 _publisher.Stop();
             }
         }
-        private void GetRates(object obj)
+        public void Execute(object obj)
         {
             var rates = _retryHandler.Execute();
             if (rates != default)
@@ -67,11 +64,6 @@ namespace RatesApi
                 _logger.LogError(LogMessages._ratesGettingCicleFailed);
                 _publisher.PublishMail(MailMessages._ratesGettingCicleFailedSubj, MailMessages._ratesGettingCicleFailed);
             }
-        }
-        private void SetTimer()
-        {
-            var act = new TimerCallback(GetRates);
-            _timer = new Timer(act, default, 0, _millisecondsDelay);
         }
     }
 }

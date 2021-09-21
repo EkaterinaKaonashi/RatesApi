@@ -49,6 +49,7 @@ namespace RatesApi
             }
             finally
             {
+                _publisher.PublishMail(MailMessages._criticalErrorSubj, MailMessages._criticalError);
                 _publisher.Stop();
             }
         }
@@ -58,6 +59,7 @@ namespace RatesApi
             if (rates != default)
             {
                 _publisher.Publish(rates);
+                _logger.LogInformation(LogMessages._ratesWasPublished);
             }
             else
             {

@@ -31,7 +31,8 @@ namespace RatesApi.Helpers
                 Body = body,
                 DisplayName = _settings.MailDisplayName,
                 MailAddresses = _settings.AdminEmail,
-                IsBodyHtml = false
+                IsBodyHtml = false,
+                Base64String = ""
             });
         }
 

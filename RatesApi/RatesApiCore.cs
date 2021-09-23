@@ -1,4 +1,4 @@
-﻿using RatesApi.Services;
+using RatesApi.Services;
 using System;
 using Microsoft.Extensions.Logging;
 using RatesApi.Constants;
@@ -41,7 +41,7 @@ namespace RatesApi
             try
             {
                 var timer = new Timer(Execute, default, 0, _millisecondsDelay);
-                while (true) { };
+                Console.ReadLine();
             }
             catch (Exception ex)
             {

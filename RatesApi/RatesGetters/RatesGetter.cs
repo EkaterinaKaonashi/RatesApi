@@ -22,9 +22,9 @@ namespace RatesApi.RatesGetters
         private string _accessKey;
 
 
-        public RatesGetter(IOptions<CommonSettings> settings, IMapper mapper, ILogger<RatesGetter> logger)
+        public RatesGetter(IOptions<CommonSettings> settings, IMapper mapper, ILogger<RatesGetter> logger, RestClient restClient)
         {
-            _restClient = new RestClient();
+            _restClient = restClient;
             _logger = logger;
             _baseCurrency = settings.Value.BaseCurrency;
             _currencies = settings.Value.Currencies;

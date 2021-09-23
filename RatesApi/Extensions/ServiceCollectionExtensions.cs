@@ -4,6 +4,7 @@ using RatesApi.Helpers;
 using RatesApi.RatesGetters;
 using RatesApi.Services;
 using RatesApi.Settings;
+using RestSharp;
 
 namespace RatesApi.Extensions
 {
@@ -15,6 +16,7 @@ namespace RatesApi.Extensions
             services.AddTransient<IPrimaryRatesService, PrimaryRatesService>();
             services.AddTransient<ISecondaryRatesService, SecondaryRatesService>();
             services.AddTransient<IRabbitPublishHelper, RabbitPublishHelper>();
+            services.AddTransient<RestClient>();
         }
 
         public static void AddOptions(this IServiceCollection services, IConfiguration configuration)

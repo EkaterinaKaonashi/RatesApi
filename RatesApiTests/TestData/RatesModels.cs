@@ -55,5 +55,39 @@ namespace RatesApiTests.TestData
                 }
             };
         }
+
+        public static RatesExchangeModel GetUnparsedRatesExchangeModel()
+        {
+            return new RatesExchangeModel
+            {
+                Updated = "23.09.2021 12:00:04",
+                BaseCurrency = "USD",
+                Rates = new Dictionary<string, decimal>
+                {
+                    { "USDRUB", 72.6963m },
+                    { "USDEUR", 0.85355m },
+                    { "USDJPY", 109.937m },
+                    { "USDGBP", 0.74122m },
+                    { "USDCHF", 0.93234m }
+                }
+            };
+        }
+
+        public static RatesExchangeModel GetUnparsedRatesExchangeModelWithWrongeBase()
+        {
+            return new RatesExchangeModel
+            {
+                Updated = "23.09.2021 12:00:04",
+                BaseCurrency = "XXX",
+                Rates = new Dictionary<string, decimal>
+                {
+                    { "USDRUB", 72.6963m },
+                    { "USDEUR", 0.85355m },
+                    { "USDJPY", 109.937m },
+                    { "USDGBP", 0.74122m },
+                    { "USDCHF", 0.93234m }
+                }
+            };
+        }
     }
 }

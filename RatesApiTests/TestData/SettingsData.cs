@@ -9,8 +9,8 @@ namespace RatesApiTests.TestData
         {
             return new CommonSettings
             {
-                MillisecondsDelay = 3600000,
-                RetryTimeout = 3600,
+                MillisecondsDelay = 1,
+                RetryTimeout = 1,
                 RetryCount = 3,
                 BaseCurrency = "USD",
                 Currencies = new List<string> { "RUB", "EUR", "JPY" }

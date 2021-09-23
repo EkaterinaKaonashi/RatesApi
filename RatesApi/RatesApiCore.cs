@@ -29,7 +29,8 @@ namespace RatesApi
             _retryHandler = new RetryHandler(
                 primaryRatesService.GetRates,
                 settings.Value.RetryCount,
-                settings.Value.RetryTimeout);
+                settings.Value.RetryTimeout,
+                _logger);
             _retryHandler.AddService(secondaryRatesService.GetRates);
 
             _millisecondsDelay = settings.Value.MillisecondsDelay;

@@ -5,12 +5,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
+using RatesApi.Constants;
 using RatesApi.Models;
 using RatesApi.Models.InputModels;
 using RatesApi.RatesGetters;
 using RatesApi.Settings;
 using RatesApiTests.TestData;
 using RestSharp;
+using System;
 
 namespace RatesApiTests
 {
@@ -57,66 +59,71 @@ namespace RatesApiTests
         }
 
         [TestCaseSource(typeof(TestSourses), nameof(TestSourses.RatesGetterSourse))]
-        public void GetRatesTest_InvalidUrl_DefoultReturned<T>(T responseData, IRatesGetterSettings settings)
+        public void GetRatesTest_InvalidUrl_ExceptionThrown<T>(T responseData, IRatesGetterSettings settings)
         {
             //Given
             var expected = RatesModels.GetRatesExchangeModel();
+            var response = ResponseData.GetErrorResponse<T>();
             _restClientMock.Setup(x => x.Execute<T>(It.IsAny<IRestRequest>()))
-                           .Returns(ResponseData.GetErrorResponse<T>());
+                           .Returns(response);
             _sut.ConfigureGetter(settings);
 
             //When
 
-            var actual = _sut.GetRates<T>();
+            Action act = () => _sut.GetRates<T>();
+            act.Should().Throw<Exception>()
+                .WithMessage(response.ErrorMessage);
 
             //Then
-            actual.Should().Be(default);
             _restClientMock.Verify(x => x.Execute<T>(It.IsAny<IRestRequest>()), Times.Once);
             _mapperMock.Verify(x => x.Map<RatesExchangeModel>(It.IsAny<T>()), Times.Never);
         }
 
         [TestCaseSource(typeof(TestSourses), nameof(TestSourses.RatesGetterSourse))]
-        public void GetRatesTest_Unauthorized_DefoultReturned<T>(T responseData, IRatesGetterSettings settings)
+        public void GetRatesTest_Unauthorized_ExceptionThrown<T>(T responseData, IRatesGetterSettings settings)
         {
             //Given
             var expected = RatesModels.GetRatesExchangeModel();
+            var response = ResponseData.GetBadResponse<T>();
             _restClientMock.Setup(x => x.Execute<T>(It.IsAny<IRestRequest>()))
-                           .Returns(ResponseData.GetBadResponse<T>());
+                           .Returns(response);
             _sut.ConfigureGetter(settings);
 
             //When
-
-            var actual = _sut.GetRates<T>();
+            Action act = () => _sut.GetRates<T>();
+            act.Should().Throw<Exception>()
+                .WithMessage(response.Content);
 
             //Then
-            actual.Should().Be(default);
             _restClientMock.Verify(x => x.Execute<T>(It.IsAny<IRestRequest>()), Times.Once);
             _mapperMock.Verify(x => x.Map<RatesExchangeModel>(It.IsAny<T>()), Times.Never);
         }
 
         [TestCaseSource(typeof(TestSourses), nameof(TestSourses.RatesGetterSourse))]
-        public void GetRatesTest_MissedCurrency_DefoultReturned<T>(T responseData, IRatesGetterSettings settings)
+        public void GetRatesTest_MissedCurrency_ExceptionThrown<T>(T responseData, IRatesGetterSettings settings)
         {
             //Given
             var expected = RatesModels.GetRatesExchangeModel();
             _iOptionsMock.Setup(x => x.Value).Returns(SettingsData.GetCommonSettingsWithWrongCurrency());
             var sut = new RatesGetter(_iOptionsMock.Object, _mapperMock.Object, _loggerMock.Object, _restClientMock.Object);
             sut.ConfigureGetter(settings);
+            var response = ResponseData.GetSuccesResponse(responseData);
             _restClientMock.Setup(x => x.Execute<T>(It.IsAny<IRestRequest>()))
-                           .Returns(ResponseData.GetSuccesResponse(responseData));
+                           .Returns(response);
 
             //When
 
-            var actual = sut.GetRates<T>();
+            Action act = () => sut.GetRates<T>();
+            act.Should().Throw<Exception>()
+                .WithMessage(string.Format(LogMessages._currenciesWereMissed, RatesModels._missedCurrency));
 
             //Then
-            actual.Should().Be(default);
             _restClientMock.Verify(x => x.Execute<T>(It.IsAny<IRestRequest>()), Times.Once);
             _mapperMock.Verify(x => x.Map<RatesExchangeModel>(It.IsAny<T>()), Times.Once);
         }
 
         [TestCaseSource(typeof(TestSourses), nameof(TestSourses.RatesGetterSourse))]
-        public void GetRatesTest_WrongBaseCurrency_DefoultReturned<T>(T responseData, IRatesGetterSettings settings)
+        public void GetRatesTest_WrongBaseCurrency_ExceptionThrown<T>(T responseData, IRatesGetterSettings settings)
         {
             //Given
             var expected = RatesModels.GetRatesExchangeModel();
@@ -124,15 +131,17 @@ namespace RatesApiTests
                                     .Returns(RatesModels.GetUnparsedRatesExchangeModelWithWrongeBase());
             var sut = new RatesGetter(_iOptionsMock.Object, _mapperMock.Object, _loggerMock.Object, _restClientMock.Object);
             sut.ConfigureGetter(settings);
+            var response = ResponseData.GetSuccesResponse(responseData);
             _restClientMock.Setup(x => x.Execute<T>(It.IsAny<IRestRequest>()))
-                           .Returns(ResponseData.GetSuccesResponse(responseData));
+                           .Returns(response);
 
             //When
 
-            var actual = sut.GetRates<T>();
+            Action act = () => sut.GetRates<T>();
+            act.Should().Throw<Exception>()
+                .WithMessage(LogMessages._wrongBaseCurrecy);
 
             //Then
-            actual.Should().Be(default);
             _restClientMock.Verify(x => x.Execute<T>(It.IsAny<IRestRequest>()), Times.Once);
             _mapperMock.Verify(x => x.Map<RatesExchangeModel>(It.IsAny<T>()), Times.Once);
         }

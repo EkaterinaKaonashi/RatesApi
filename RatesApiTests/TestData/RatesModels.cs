@@ -7,6 +7,7 @@ namespace RatesApiTests.TestData
 {
     public static class RatesModels
     {
+        public const string _missedCurrency = "XXX";
         public static CurrencyApiRatesModel GetCurrencyApiRatesModel()
         {
             return new CurrencyApiRatesModel
@@ -78,7 +79,7 @@ namespace RatesApiTests.TestData
             return new RatesExchangeModel
             {
                 Updated = "23.09.2021 12:00:04",
-                BaseCurrency = "XXX",
+                BaseCurrency = _missedCurrency,
                 Rates = new Dictionary<string, decimal>
                 {
                     { "USDRUB", 72.6963m },

@@ -25,7 +25,7 @@ namespace RatesApiTests.TestData
                 RetryTimeout = 3600,
                 RetryCount = 3,
                 BaseCurrency = "USD",
-                Currencies = new List<string> { "RUB", "EUR", "JPY", "XXX" }
+                Currencies = new List<string> { "RUB", "EUR", "JPY", RatesModels._missedCurrency }
             };
         }
 

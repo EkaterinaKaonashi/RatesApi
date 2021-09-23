@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using RatesApi.Constants;
 using RatesApi.Settings;
 using RestSharp;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -55,7 +56,7 @@ namespace RatesApi.RatesGetters
             }
             else
             {
-                _logger.LogError(responce.ErrorMessage == default ? responce.Content : responce.ErrorMessage);
+                throw new Exception(responce.ErrorMessage == default ? responce.Content : responce.ErrorMessage);
             }
             return default;
         }
@@ -65,16 +66,14 @@ namespace RatesApi.RatesGetters
             
             if (result.BaseCurrency != _baseCurrency)
             {
-                _logger.LogError(string.Format(LogMessages._wrongBaseCurrecy));
-                return false;
+                throw new Exception(LogMessages._wrongBaseCurrecy);
             }
             else
             {
                 result.Rates = SeparateCurrencies(result.Rates, out List<string> missingCurrencies);
                 if (missingCurrencies.Count != 0)
                 {
-                    _logger.LogError(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
-                    return false;
+                    throw new Exception(string.Format(LogMessages._currenciesWereMissed, string.Join(", ", missingCurrencies)));
                 }
             }
             return result != default;

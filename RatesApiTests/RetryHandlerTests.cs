@@ -6,6 +6,7 @@ using RatesApi.Services;
 using RatesApiTests.TestData;
 using RatesApi;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 
 namespace RatesApiTests
 {
@@ -13,9 +14,9 @@ namespace RatesApiTests
     {
         private  int _retryCount;
         private int _millisecondsDelay;
-        private Mock<List<ServiceHandler>> _serviceHandlers;
-        private Mock<IPrimaryRatesService> _primaryRatesService; // настроить 
-        private Mock<ISecondaryRatesService> _secondaryRatesService; //настроить
+        private Mock<IPrimaryRatesService> _primaryRatesService;
+        private Mock<ISecondaryRatesService> _secondaryRatesService;
+        private Mock<ILogger> _loggerMock;
         public delegate Mock<RatesExchangeModel> ServiceHandler();
         
 
@@ -25,8 +26,7 @@ namespace RatesApiTests
             var commonSettings = SettingsData.GetCommonSettings();
             _retryCount = commonSettings.RetryCount;
             _millisecondsDelay = commonSettings.MillisecondsDelay;
-            _serviceHandlers = new Mock<List<ServiceHandler>>();
-
+            _loggerMock = new Mock<ILogger>();
             _primaryRatesService = new Mock<IPrimaryRatesService>();
             _secondaryRatesService = new Mock<ISecondaryRatesService>();
 
@@ -39,7 +39,8 @@ namespace RatesApiTests
             _primaryRatesService.Setup(x => x.GetRates()).Returns(RatesModels.GetRatesExchangeModel());
             var _sut = new RetryHandler(_primaryRatesService.Object.GetRates,
                                         _retryCount,
-                                        _millisecondsDelay);
+                                        _millisecondsDelay,
+                                        _loggerMock.Object);
             _sut.AddService(_secondaryRatesService.Object.GetRates);
 
             //When
@@ -56,7 +57,8 @@ namespace RatesApiTests
             //Given
             var _sut = new RetryHandler(_primaryRatesService.Object.GetRates,
                                         _retryCount,
-                                        _millisecondsDelay);
+                                        _millisecondsDelay,
+                                        _loggerMock.Object);
             _sut.AddService(_secondaryRatesService.Object.GetRates);
 
             //When
@@ -78,7 +80,8 @@ namespace RatesApiTests
             _secondaryRatesService.Setup(x => x.GetRates()).Returns(RatesModels.GetRatesExchangeModel());
             var _sut = new RetryHandler(_primaryRatesService.Object.GetRates,
                                         _retryCount,
-                                        _millisecondsDelay);
+                                        _millisecondsDelay,
+                                        _loggerMock.Object);
             _sut.AddService(_secondaryRatesService.Object.GetRates);
 
             //When
